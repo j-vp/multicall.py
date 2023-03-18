@@ -93,7 +93,7 @@ click = ">=8.0.0"
 mypy-extensions = ">=0.4.3"
 pathspec = ">=0.9.0"
 platformdirs = ">=2"
-tomli = {version = ">=1.1.0", markers = "python_full_version < \"3.11.0a7\""}
+tomli = {version = ">=1.1.0", markers = "python_full_version < \"3.12.0a7\""}
 typing-extensions = {version = ">=3.10.0.0", markers = "python_version < \"3.10\""}
 
 [package.extras]
@@ -770,7 +770,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "flake8 (<5)", "pytest-co
 
 [metadata]
 lock-version = "1.1"
-python-versions = ">=3.8,<3.11"
+python-versions = ">=3.8,<3.12"
 content-hash = "c2254575d46c22eae89db83bc6b79b7e5e6aff0758ac2896da4de47aa513aa8d"
 
 [metadata.files]
