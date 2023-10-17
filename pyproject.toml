@@ -8,7 +8,7 @@ authors = ["banteg"]
 python = ">=3.8,<3.12"
 # These web3.py versions have a busted async provider and cannot be used in any multithreaded applications
 web3 = ">=6.0.0"
-eth_retry = "v0.1.8"
+eth_retry = "^0.1.18"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.5"
