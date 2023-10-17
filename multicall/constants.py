@@ -1,3 +1,4 @@
+import asyncio
 import os
 from enum import IntEnum
 from typing import Dict
@@ -56,7 +57,9 @@ class Network(IntEnum):
     Milkomeda = 2001
     Kava = 2222
     FantomTestnet = 4002
+    Canto = 7700
     Klaytn = 8217
+    Base = 8453
     EvmosTestnet = 9000
     Evmos = 9001
     Arbitrum = 42161
@@ -73,10 +76,11 @@ class Network(IntEnum):
     Aurora = 1313161554
     Harmony = 1666600000
     Arcadia = 321831
+    PulseChain = 369
+    PulseChainTestnet = 943
 
 MULTICALL_ADDRESSES: Dict[int,str] = {
     Network.Mainnet: '0xeefBa1e63905eF1D7ACbA5a8513c70307C1cE441',
-    Network.Arcadia: '0xeefBa1e63905eF1D7ACbA5a8513c70307C1cE441',
     Network.Kovan: '0x2cc8688C5f75E365aaEEb4ea8D6a480405A48D2A',
     Network.Rinkeby: '0x42Ad527de7d4e9d9d011aC45B31D8551f8Fe9821',
     Network.Gorli: '0x77dCa2C955b15e9dE4dbBCf1246B4B85b651e50e',
@@ -150,6 +154,7 @@ MULTICALL3_ADDRESSES: Dict[int,str] = {
     Network.MoonbaseAlphaTestnet: '0xcA11bde05977b3631167028862bE2a173976CA11',
     Network.Milkomeda: '0xcA11bde05977b3631167028862bE2a173976CA11',
     Network.FantomTestnet: '0xcA11bde05977b3631167028862bE2a173976CA11',
+    Network.Canto: '0xcA11bde05977b3631167028862bE2a173976CA11',
     Network.Klaytn: '0xcA11bde05977b3631167028862bE2a173976CA11',
     Network.EvmosTestnet: '0xcA11bde05977b3631167028862bE2a173976CA11',
     Network.Evmos: '0xcA11bde05977b3631167028862bE2a173976CA11',
@@ -166,6 +171,10 @@ MULTICALL3_ADDRESSES: Dict[int,str] = {
     Network.Sepolia: '0xcA11bde05977b3631167028862bE2a173976CA11',
     Network.Aurora: '0xcA11bde05977b3631167028862bE2a173976CA11',
     Network.Harmony: '0xcA11bde05977b3631167028862bE2a173976CA11',
+    Network.PulseChain: '0xcA11bde05977b3631167028862bE2a173976CA11',
+    Network.PulseChainTestnet: '0xcA11bde05977b3631167028862bE2a173976CA11',
+    Network.Base: '0xcA11bde05977b3631167028862bE2a173976CA11',
+    Network.Arcadia: '0xcA11bde05977b3631167028862bE2a173976CA11',
 }
 
 # With default AsyncBaseProvider settings, some dense calls will fail
@@ -178,3 +187,7 @@ parallelism_capacity = max(1, os.cpu_count() - 1)
 NUM_PROCESSES = min(user_choice, parallelism_capacity)
 
 NO_STATE_OVERRIDE = [ Network.Gnosis, Network.Harmony, Network.Moonbeam, Network.Moonriver, Network.Kovan, Network.Fuse ]
+
+# NOTE: If we run too many async calls at once, we'll have memory issues.
+#       Feel free to increase this with the "MULTICALL_CALL_SEMAPHORE" env var if you know what you're doing.
+ASYNC_SEMAPHORE = int(os.environ.get("MULTICALL_CALL_SEMAPHORE", 1000))

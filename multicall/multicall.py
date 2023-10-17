@@ -7,10 +7,10 @@ import requests
 from web3 import Web3
 
 from multicall import Call
-from multicall.constants import (GAS_LIMIT, MULTICALL2_ADDRESSES, MULTICALL2_BYTECODE,
-                                 MULTICALL3_BYTECODE, MULTICALL3_ADDRESSES, w3)
+from multicall.constants import (GAS_LIMIT, MULTICALL2_ADDRESSES,
+                                 MULTICALL3_ADDRESSES, MULTICALL3_BYTECODE, w3)
 from multicall.loggers import setup_logger
-from multicall.utils import (await_awaitable, chain_id, gather,
+from multicall.utils import (_get_semaphore, await_awaitable, chain_id, gather,
                              run_in_subprocess, state_override_supported)
 
 logger = setup_logger(__name__)
@@ -30,6 +30,7 @@ def unpack_batch_results(batch_results: List[List[CallResponse]]) -> List[CallRe
 
 
 class Multicall:
+    __slots__ = "calls", "block_id", "require_success", "gas_limit", "w3", "chainid", "multicall_sig", "multicall_address"
     def __init__(
         self, 
         calls: List[Call],
@@ -54,9 +55,12 @@ class Multicall:
 
     def __call__(self) -> Dict[str,Any]:
         start = time()
-        response = await_awaitable(self.coroutine())
+        response = await_awaitable(self)
         logger.debug(f"Multicall took {time() - start}s")
         return response
+     
+    def __await__(self) -> Dict[str,Any]:
+        return self.coroutine().__await__()
 
     async def coroutine(self) -> Dict[str,Any]:
         batches = await gather([
@@ -77,21 +81,22 @@ class Multicall:
         if calls is None:
             calls = self.calls
         
-        try:
-            args = await run_in_subprocess(get_args, calls, self.require_success)
-            if self.require_success is True:
-                _, outputs = await self.aggregate.coroutine(args)
-                outputs = await run_in_subprocess(unpack_aggregate_outputs, outputs)
-            else:
-                _, _, outputs = await self.aggregate.coroutine(args)
-            outputs = await gather([
-                run_in_subprocess(Call.decode_output, output, call.signature, call.returns, success)
-                for call, (success, output) in zip(calls, outputs)
-            ])
-            logger.debug(f"coroutine {id} finished")
-            return outputs
-        except Exception as e:
-            _raise_or_proceed(e, len(calls), ConnErr_retries=ConnErr_retries)
+        async with _get_semaphore():
+            try:
+                args = await run_in_subprocess(get_args, calls, self.require_success)
+                if self.require_success is True:
+                    _, outputs = await self.aggregate.coroutine(args)
+                    outputs = await run_in_subprocess(unpack_aggregate_outputs, outputs)
+                else:
+                    _, _, outputs = await self.aggregate.coroutine(args)
+                outputs = await gather([
+                    run_in_subprocess(Call.decode_output, output, call.signature, call.returns, success)
+                    for call, (success, output) in zip(calls, outputs)
+                ])
+                logger.debug(f"coroutine {id} finished")
+                return outputs
+            except Exception as e:
+                _raise_or_proceed(e, len(calls), ConnErr_retries=ConnErr_retries)
         
         # Failed, we need to rebatch the calls and try again.
         batch_results = await gather([
@@ -133,6 +138,7 @@ class NotSoBrightBatcher:
     This class helps with processing a large volume of large multicalls.
     It's not so bright, but should quickly bring the batch size down to something reasonable for your node.
     """
+    __slots__ = "step", 
     def __init__(self) -> None:
         self.step = 10000
     
