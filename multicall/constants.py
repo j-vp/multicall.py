@@ -54,6 +54,7 @@ class Network(IntEnum):
     Coston2Testnet = 114
     Fuse = 122
     Heco = 128
+    Unichain = 130
     Polygon = 137
     Fantom = 250
     Boba = 288
@@ -157,6 +158,7 @@ MULTICALL3_ADDRESSES: Final[Dict[int, ChecksumAddress]] = {
     Network.Coston2Testnet: "0xcA11bde05977b3631167028862bE2a173976CA11",
     Network.Fuse: "0xcA11bde05977b3631167028862bE2a173976CA11",
     Network.Heco: "0xcA11bde05977b3631167028862bE2a173976CA11",
+    Network.Unichain: "0xcA11bde05977b3631167028862bE2a173976CA11",
     Network.Polygon: "0xcA11bde05977b3631167028862bE2a173976CA11",
     Network.Fantom: "0xcA11bde05977b3631167028862bE2a173976CA11",
     Network.Boba: "0xcA11bde05977b3631167028862bE2a173976CA11",
