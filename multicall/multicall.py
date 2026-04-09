@@ -69,6 +69,7 @@ class Multicall:
         gas_limit: int = GAS_LIMIT,
         _w3: Web3 = w3,
         origin: Optional[AnyAddress] = None,
+        _chain_id: Optional[int] = None,
     ) -> None:
         self.calls: Final = calls
         self.block_id = block_id
@@ -76,7 +77,7 @@ class Multicall:
         self.gas_limit: Final = gas_limit
         self.w3: Final = _w3
         self.origin: Final = to_checksum_address(origin) if origin else None
-        chainid: int = chain_id(_w3)  # type: ignore [assignment]
+        chainid: int = _chain_id if _chain_id is not None else chain_id(_w3)  # type: ignore [assignment]
         self.chainid: Final = chainid
         multicall_map = (
             MULTICALL3_ADDRESSES if chainid in MULTICALL3_ADDRESSES else MULTICALL2_ADDRESSES
