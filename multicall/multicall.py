@@ -22,6 +22,7 @@ from multicall.utils import (
     _get_semaphore,
     await_awaitable,
     chain_id,
+    chainids,
     gather,
     state_override_supported,
 )
@@ -79,6 +80,10 @@ class Multicall:
         self.origin: Final = to_checksum_address(origin) if origin else None
         chainid: int = _chain_id if _chain_id is not None else chain_id(_w3)  # type: ignore [assignment]
         self.chainid: Final = chainid
+        # Populate the chain_id cache so Call.coroutine() doesn't call chain_id()
+        # with an AsyncWeb3 instance (which would return an unawaited coroutine)
+        if _w3 not in chainids:
+            chainids[_w3] = chainid
         multicall_map = (
             MULTICALL3_ADDRESSES if chainid in MULTICALL3_ADDRESSES else MULTICALL2_ADDRESSES
         )

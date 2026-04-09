@@ -33,11 +33,18 @@ chainids: Final[Dict[Web3, int]] = {}
 def chain_id(w3: Web3) -> int:
     """
     Returns chain id for an instance of Web3. Helps save repeat calls to node.
+    Handles AsyncWeb3 by making a sync HTTP request to avoid unawaited coroutines.
     """
     try:
         return chainids[w3]
     except KeyError:
-        chainids[w3] = w3.eth.chain_id
+        if hasattr(w3.eth, 'is_async') and w3.eth.is_async:
+            import requests as req
+            endpoint = w3.provider.endpoint_uri
+            resp = req.post(endpoint, json={"jsonrpc": "2.0", "method": "eth_chainId", "params": [], "id": 1}, timeout=5)
+            chainids[w3] = int(resp.json()["result"], 16)
+        else:
+            chainids[w3] = w3.eth.chain_id
         return chainids[w3]
 
 
