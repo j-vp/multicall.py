@@ -1,5 +1,16 @@
 # mypy: disable-error-code="attr-defined"
-from typing import Any, Callable, Final, Generator, List, Optional, Sequence, Tuple, Union, final
+from typing import (
+    Any,
+    Callable,
+    Final,
+    Generator,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
+    Union,
+    final,
+)
 
 import eth_retry
 from cchecksum import to_checksum_address
@@ -26,7 +37,6 @@ AnyAddress = Union[str, Address, ChecksumAddress, HexAddress]
 
 @final
 class Call:
-
     __slots__ = (
         "target",
         "returns",
@@ -84,7 +94,6 @@ class Call:
         returns: Optional[Sequence[Tuple[Any, Optional[Callable]]]] = None,
         success: Optional[bool] = None,
     ) -> Any:
-
         if success is None:
             apply_handler = lambda handler, value: handler(value)
         else:
@@ -151,7 +160,7 @@ class Call:
             )
 
         async with _get_semaphore():
-            output = await get_async_w3(_w3).eth.call(  # type: ignore [misc]
+            output = await (await get_async_w3(_w3)).eth.call(  # type: ignore [misc]
                 *prep_args(
                     self.target,
                     self.signature,
@@ -177,7 +186,6 @@ def prep_args(
     gas_limit: Optional[int],
     state_override_code: Optional[HexStr],
 ) -> List[Any]:
-
     calldata = signature.encode_data(args)
 
     call_dict = {"to": target, "data": calldata}

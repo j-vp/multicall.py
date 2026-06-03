@@ -1,6 +1,17 @@
 from asyncio import TimeoutError
 from time import time
-from typing import Any, Dict, Final, Generator, List, Optional, Sequence, Tuple, Union, final
+from typing import (
+    Any,
+    Dict,
+    Final,
+    Generator,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
+    Union,
+    final,
+)
 
 import aiohttp
 import cchecksum
@@ -39,7 +50,9 @@ concat: Final = toolz.concat  # type: ignore [attr-defined]
 mapcat: Final = toolz.mapcat  # type: ignore [attr-defined]
 
 
-def get_args(calls: List[Call], require_success: bool = True) -> List[Union[bool, List[List[Any]]]]:
+def get_args(
+    calls: List[Call], require_success: bool = True
+) -> List[Union[bool, List[List[Any]]]]:
     if require_success is True:
         return [[[call.target, call.data] for call in calls]]
     return [require_success, [[call.target, call.data] for call in calls]]
@@ -85,7 +98,9 @@ class Multicall:
         if _w3 not in chainids:
             chainids[_w3] = chainid
         multicall_map = (
-            MULTICALL3_ADDRESSES if chainid in MULTICALL3_ADDRESSES else MULTICALL2_ADDRESSES
+            MULTICALL3_ADDRESSES
+            if chainid in MULTICALL3_ADDRESSES
+            else MULTICALL2_ADDRESSES
         )
         self.multicall_address: Final = multicall_map[chainid]
 
@@ -115,8 +130,12 @@ class Multicall:
         )
         return dict(mapcat(dict.items, concat(batches)))
 
-    def _contract_method(self, request_signature: list, return_signature: tuple) -> None:
-        self.calls.append(Call(self.multicall_address, request_signature, [return_signature]))
+    def _contract_method(
+        self, request_signature: list, return_signature: tuple
+    ) -> None:
+        self.calls.append(
+            Call(self.multicall_address, request_signature, [return_signature])
+        )
 
     def add_base_fee(self, return_signature: tuple = ("base_fee", None)) -> None:
         signature = ["getBasefee()(uint256)"]
@@ -128,7 +147,9 @@ class Multicall:
         signature = ["getBlockHash(uint256)(bytes32)", block_number]
         self._contract_method(signature, return_signature)
 
-    def add_block_number(self, return_signature: tuple = ("block_number", None)) -> None:
+    def add_block_number(
+        self, return_signature: tuple = ("block_number", None)
+    ) -> None:
         signature = ["getBlockNumber()(uint256)"]
         self._contract_method(signature, return_signature)
 
@@ -140,15 +161,21 @@ class Multicall:
         signature = ["getCurrentBlockCoinbase()(address)"]
         self._contract_method(signature, return_signature)
 
-    def add_block_difficulty(self, return_signature: tuple = ("difficulty", None)) -> None:
+    def add_block_difficulty(
+        self, return_signature: tuple = ("difficulty", None)
+    ) -> None:
         signature = ["getCurrentBlockDifficulty()(address)"]
         self._contract_method(signature, return_signature)
 
-    def add_block_gas_limit(self, return_signature: tuple = ("gas_limit", None)) -> None:
+    def add_block_gas_limit(
+        self, return_signature: tuple = ("gas_limit", None)
+    ) -> None:
         signature = ["getCurrentBlockGasLimit()(uint256)"]
         self._contract_method(signature, return_signature)
 
-    def add_block_timestamp(self, return_signature: tuple = ("timestamp", None)) -> None:
+    def add_block_timestamp(
+        self, return_signature: tuple = ("timestamp", None)
+    ) -> None:
         signature = ["getCurrentBlockTimestamp()(uint256)"]
         self._contract_method(signature, return_signature)
 
@@ -158,7 +185,9 @@ class Multicall:
         signature = ["getEthBalance(address)(uint256)", address]
         self._contract_method(signature, return_signature)
 
-    def add_last_block_hash(self, return_signature: tuple = ("last_block_hash", None)) -> None:
+    def add_last_block_hash(
+        self, return_signature: tuple = ("last_block_hash", None)
+    ) -> None:
         signature = ["getLastBlockHash()(bytes32)"]
         self._contract_method(signature, return_signature)
 

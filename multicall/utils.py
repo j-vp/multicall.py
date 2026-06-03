@@ -5,7 +5,7 @@ from asyncio import get_event_loop as _get_event_loop
 from typing import Any, Awaitable, Dict, Final, Iterable, List, TypeVar
 
 import eth_retry
-from aiohttp import ClientTimeout
+from aiohttp import ClientSession, ClientTimeout, TCPConnector
 import web3
 from web3 import AsyncHTTPProvider, Web3
 from web3.eth import AsyncEth
@@ -38,10 +38,15 @@ def chain_id(w3: Web3) -> int:
     try:
         return chainids[w3]
     except KeyError:
-        if hasattr(w3.eth, 'is_async') and w3.eth.is_async:
+        if hasattr(w3.eth, "is_async") and w3.eth.is_async:
             import requests as req
+
             endpoint = w3.provider.endpoint_uri
-            resp = req.post(endpoint, json={"jsonrpc": "2.0", "method": "eth_chainId", "params": [], "id": 1}, timeout=5)
+            resp = req.post(
+                endpoint,
+                json={"jsonrpc": "2.0", "method": "eth_chainId", "params": [], "id": 1},
+                timeout=5,
+            )
             chainids[w3] = int(resp.json()["result"], 16)
         else:
             chainids[w3] = w3.eth.chain_id
@@ -49,6 +54,9 @@ def chain_id(w3: Web3) -> int:
 
 
 async_w3s: Final[Dict[Web3, Web3]] = {}
+
+# Cap on simultaneous keep-alive connections per provider session (see get_async_w3).
+_KEEPALIVE_CONNECTION_LIMIT: Final = 100
 
 
 def get_endpoint(w3: Web3) -> str:
@@ -60,7 +68,7 @@ def get_endpoint(w3: Web3) -> str:
     return provider.endpoint_uri  # type: ignore [no-any-return]
 
 
-def get_async_w3(w3: Web3) -> Web3:
+async def get_async_w3(w3: Web3) -> Web3:
     if w3 in async_w3s:
         return async_w3s[w3]
     if w3.eth.is_async and isinstance(w3.provider, AsyncBaseProvider):
@@ -93,6 +101,21 @@ def get_async_w3(w3: Web3) -> Web3:
     else:
         async_w3 = Web3(provider=provider, middlewares=[])
         async_w3.eth = AsyncEth(async_w3)
+
+    # web3.py v7's AsyncHTTPProvider lazily caches an aiohttp session built with
+    # TCPConnector(force_close=True), which disables HTTP keep-alive — every RPC call then
+    # pays a fresh TCP+TLS handshake. Under the concurrency Multicall drives this serializes
+    # into multi-second latencies and request timeouts. Pre-seed a pooled keep-alive session
+    # so connections are reused (no-op for websocket providers).
+    if isinstance(provider, AsyncHTTPProvider) and hasattr(
+        provider, "cache_async_session"
+    ):
+        await provider.cache_async_session(
+            ClientSession(
+                raise_for_status=True,
+                connector=TCPConnector(limit=_KEEPALIVE_CONNECTION_LIMIT),
+            )
+        )
 
     async_w3s[w3] = async_w3  # type: ignore [assignment]
     return async_w3  # type: ignore [return-value]

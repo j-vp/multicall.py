@@ -4,7 +4,10 @@ from pathlib import Path
 from setuptools import find_packages, setup
 
 
-if os.environ.get("MULTICALL_NOCOMPILE") or platform.python_implementation() != "CPython":
+if (
+    os.environ.get("MULTICALL_NOCOMPILE")
+    or platform.python_implementation() != "CPython"
+):
     # We only compile this library for CPython, other implementations will use it as normal interpreted python code
     ext_modules = []
 else:
@@ -181,7 +184,9 @@ setup(
     include_package_data=True,
     long_description=long_description,
     long_description_content_type="text/markdown",
-    install_requires=poetry_dependencies_to_install_requires(poetry_config["dependencies"]),
+    install_requires=poetry_dependencies_to_install_requires(
+        poetry_config["dependencies"]
+    ),
     ext_modules=ext_modules,
     zip_safe=False,
     classifiers=[
